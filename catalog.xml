@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="file:/C:/NfeAutorizacao.xml" uri="xml-resources/web-service-references/NfeAutorizacao/wsdl/NfeAutorizacao.xml.wsdl"/>
+    <system systemId="file:/C:/NfeAutorizacao.wsdl" uri="xml-resources/web-service-references/NfeAutorizacao/wsdl/NfeAutorizacao.wsdl"/>
+    <system systemId="file:/C:/NfeRetAutorizacao.wsdl" uri="xml-resources/web-service-references/NfeRetAutorizacao/wsdl/NfeRetAutorizacao.wsdl"/>
+</catalog>
