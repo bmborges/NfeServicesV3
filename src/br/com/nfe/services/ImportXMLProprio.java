@@ -6,8 +6,7 @@ package br.com.nfe.services;
 
 import br.com.nfe.gui.Painel;
 import br.com.nfe.util.Database;
-import br.inf.portalfiscal.nfe.canc.TCancNFe;
-import br.inf.portalfiscal.nfe.canc.TProcCancNFe;
+import br.inf.portalfiscal.nfe.canc.*;
 import br.inf.portalfiscal.nfe.schema.envEventoCancNFe.TProcEvento;
 import br.inf.portalfiscal.nfe.schema.envinfe.TNfeProc;
 import java.awt.Color;

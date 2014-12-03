@@ -225,7 +225,8 @@ public class AssinarXMLsCertfificadoA1 {
         NodeList elements = document.getElementsByTagName(tagCancInut);  
         org.w3c.dom.Element el = (org.w3c.dom.Element) elements.item(0);  
         String id = el.getAttribute("Id");  
-  
+        el.setIdAttribute("Id", true);
+        
         Reference ref = (Reference) signatureFactory.newReference("#" + id,  
                 signatureFactory.newDigestMethod(DigestMethod.SHA1, null),  
                 transformList, null, null);  

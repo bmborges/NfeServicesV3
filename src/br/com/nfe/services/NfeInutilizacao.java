@@ -10,6 +10,7 @@ import br.com.nfe.dao.vnd.VND_pedvendaDAO;
 import br.com.nfe.dao.vnd.VND_nfpedidoDAO;
 import br.com.nfe.util.AssinarXMLsCertfificadoA1;
 import br.com.nfe.util.KStore;
+import br.com.nfe.util.Util;
 import br.inf.portalfiscal.nfe.schema.inutnfe.ObjectFactory;
 import br.inf.portalfiscal.nfe.schema.inutnfe.TInutNFe;
 import br.inf.portalfiscal.nfe.schema.retinutnfe.TRetInutNFe;
@@ -53,11 +54,13 @@ public class NfeInutilizacao {
     static Timer t = new Timer();
     static TimerTask tt;
     static int tempo = 1000 * 30;
-
+    Util u = null;
     VND_nfpedidoDAO pedido_dao = null;
     
-    public NfeInutilizacao(br.com.nfe.gui.Painel main) {
+    
+    public NfeInutilizacao(br.com.nfe.gui.Painel main) throws Exception {
         this.main = main;
+        u = new Util();
     }
 
 
@@ -144,7 +147,7 @@ public class NfeInutilizacao {
              
              
      inf.setId(id);
-     inf.setTpAmb("1");        
+     inf.setTpAmb(String.valueOf(u.TpAmb()));        
      inf.setXServ("INUTILIZAR");
      inf.setCUF(iduf);
      inf.setAno(ano);
@@ -157,7 +160,7 @@ public class NfeInutilizacao {
              
      inut = new TInutNFe();
 
-     inut.setVersao("2.00");
+     inut.setVersao("3.10");
      inut.setInfInut(inf);
 
      JAXBContext context = null;
@@ -165,7 +168,7 @@ public class NfeInutilizacao {
         try {
             StringWriter out = new StringWriter();
 
-            context = JAXBContext.newInstance(br.inf.portalfiscal.nfe.schema.inutnfe.TInutNFe.class);
+            context = JAXBContext.newInstance(TInutNFe.class);
             Marshaller marshaller = context.createMarshaller();
             JAXBElement<TInutNFe> element = new ObjectFactory().createInutNFe(inut);
             marshaller.setProperty(
@@ -178,6 +181,7 @@ public class NfeInutilizacao {
             xml = out.toString();
 
             xml = xml.replace("xmlns:ns2=\"http://www.w3.org/2000/09/xmldsig#\"", "");
+            xml = Util.RemoveCaracteresEdicao(xml);
 
             AssinarXMLsCertfificadoA1 AssinarXml = new AssinarXMLsCertfificadoA1();    
             xml = AssinarXml.assinaXml(xml, "assinaInutNFe") ;
@@ -194,21 +198,8 @@ public class NfeInutilizacao {
          
              KStore k = new KStore();
              k.KeyStore(); 
-             
-//             String CNPJ = pedido_hm.get("cnpj").toString();
-//             CNPJ = CNPJ.replace(".", "");
-//             CNPJ = CNPJ.replace("/", "");
-//             CNPJ = CNPJ.replace("-", "");             
-//    
+
              String iduf = pedido_hm.get("iduf").toString();
-//             String ano = pedido_hm.get("ano").toString();
-//             String nrnota = pedido_hm.get("cdnf").toString();
-             
-//             String nrnotaf = nrnota;
-//             
-//             for (int i = 0; i < 9 - nrnota.length() ; i++) {
-//                 nrnotaf = "0" + nrnotaf;
-//             }
 //             String id = "ID" + iduf + ano + CNPJ + "55000" + nrnotaf + nrnotaf;
 
             /**
@@ -217,33 +208,14 @@ public class NfeInutilizacao {
 
              ADM_ParamDAO dao = new ADM_ParamDAO();
              
-             String[] endereco = null;
-//             if (StatusServico.cStat == 107){
-                 endereco = dao.pesquisa_webservice("WebserverNfeInutilizacao",iduf);
-//             } else {
-//                 endereco = dao.pesquisa_webservice("WebserverNfeInutilizacaoCont","91");
-//             }
+             String[] endereco = dao.pesquisa_webservice("WebserverNfeInutilizacaoV3",iduf);
+             if (endereco[0] == null || endereco[0].length() <= 0) {
+                 main.CarregaJtxa("Endereço Inutilizacao não Localizado",Color.MAGENTA);
+                 return;
+             }
              
              URL url = new URL(endereco[0]);             
              
-//             TInutNFe.InfInut inf = new TInutNFe.InfInut();
-//             
-//             inf.setId(id);
-//             inf.setTpAmb("1");        
-//             inf.setXServ("INUTILIZAR");
-//             inf.setCUF(iduf);
-//             inf.setAno(ano);
-//             inf.setCNPJ(CNPJ);
-//             inf.setMod("55");
-//             inf.setSerie("0");
-//             inf.setNNFIni(nrnota);
-//             inf.setNNFFin(nrnota);
-//             inf.setXJust("NUMERACAO NAO UTILIZADA");
-//             
-//             TInutNFe inut = new TInutNFe();
-//
-//             inut.setVersao("2.00");
-//             inut.setInfInut(inf);
              
              try {
                  MontaXML(pedido_hm);
@@ -251,34 +223,6 @@ public class NfeInutilizacao {
                  main.CarregaJtxa(e.toString(),Color.RED);
              }
              
-//             JAXBContext context = null;
-//
-//            try {
-//                StringWriter out = new StringWriter();
-//
-//                context = JAXBContext.newInstance("br.inf.portalfiscal.nfe.inu");
-//                Marshaller marshaller = context.createMarshaller();
-//                JAXBElement<TInutNFe> element = new ObjectFactory().createInutNFe(inut);
-//                marshaller.setProperty(
-//                    javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT,
-//                    Boolean.TRUE
-//                );
-//                
-//                marshaller.marshal(element,new StreamResult(out));
-//
-//                xml = out.toString();
-//                
-//                xml = xml.replace("xmlns:ns2=\"http://www.w3.org/2000/09/xmldsig#\"", "");
-//                       
-//                AssinarXMLsCertfificadoA1 AssinarXml = new AssinarXMLsCertfificadoA1();    
-//                xml = AssinarXml.assinaXml(xml, "assinaInutNFe") ;
-//               
-//            } catch (JAXBException e) {
-//                e.printStackTrace();
-//            }
-        
-            // System.out.println(xml);
-             /* Declaração variaveis de retorno */
 
              String retorno = Envio(xml, url, iduf, endereco[2]);
 
@@ -294,6 +238,7 @@ public class NfeInutilizacao {
                  VND_nfpedidoDAO pedido_dao = new VND_nfpedidoDAO();
                  VND_NfpedidoBean pedido_bean = new VND_NfpedidoBean();
 
+                 pedido_bean.setId_nfpedido(Integer.parseInt(pedido_hm.get("id_nfpedido").toString()));
                  pedido_bean.setXml_nfe(xml);
                  pedido_bean.setCdpedido(Integer.parseInt(pedido_hm.get("cdpedido").toString()));
                  pedido_bean.setCdnf(pedido_hm.get("cdnf").toString());
@@ -305,8 +250,13 @@ public class NfeInutilizacao {
                  if (cstat == 102 || cstat == 563 || cstat == 206){
 
                     pedido_bean = new VND_NfpedidoBean();
+                    pedido_bean.setId_nfpedido(Integer.parseInt(pedido_hm.get("id_nfpedido").toString()));
                     pedido_bean.setStatus_nfe(cstat);
                     pedido_bean.setObs_canc_nfe(retorno);
+                    String data = rinut.getInfInut().getDhRecbto();
+                    data = data.substring(0, 19);
+                    data = data.replace("T", " ");
+                    pedido_bean.setData(data);
                     pedido_bean.setProtocolo(rinut.getInfInut().getNProt());
                     pedido_bean.setCdpedido(Integer.parseInt(pedido_hm.get("cdpedido").toString()));
                     pedido_bean.setCdnf(pedido_hm.get("cdnf").toString());

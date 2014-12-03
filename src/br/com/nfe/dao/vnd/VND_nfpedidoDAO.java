@@ -165,12 +165,12 @@ public int idcentrocusto_operador(int cdpedido) throws SQLException{
 public HashMap pesquisa_nfpedido_inut() throws SQLException, Exception{
     
    
-    String qry = "select cdpedido, cdnf, iduf, e.cnpj,"
+    String qry = "select id_nfpedido, cdpedido, cdnf, iduf, e.cnpj,"
             + " substring(extract('year' from coalesce(nf.data,current_date))::text,3,2) as ano  from vnd_nfpedido nf"
             + "	inner join vnd_pedvenda using (cdpedido)"
             + "	inner join cdc_estabelecim e using (idestabelecimen)"
             + "	inner join adm_estado es on (e.uf = es.uf )"
-            + " where (status_nfe is null or status_nfe in (0)) and"
+            + " where status_nfe in (0) and"
             + " situacaonf = 'I' order by id_nfpedido limit 1";
 
 
@@ -181,11 +181,19 @@ public HashMap pesquisa_nfpedido_inut() throws SQLException, Exception{
     HashMap map = new HashMap();
 
     if (rs.next()) {
-        map.put("cdpedido", rs.getInt(1));
-        map.put("cdnf", rs.getString(2));
-        map.put("iduf", rs.getInt(3));
-        map.put("cnpj", rs.getString(4));
-        map.put("ano", rs.getString(5));
+        map.put("id_nfpedido", rs.getInt("id_nfpedido"));
+        map.put("cdpedido", rs.getInt("cdpedido"));
+        map.put("cdnf", rs.getString("cdnf"));
+        map.put("iduf", rs.getInt("iduf"));
+        map.put("cnpj", rs.getString("cnpj"));
+        map.put("ano", rs.getString("ano"));
+        
+        qry = "update vnd_nfpedido set status_nfe = null where id_nfpedido = ?";
+        stmt = conn.prepareStatement(qry);
+        stmt.setInt(1, rs.getInt("id_nfpedido"));
+        stmt.executeUpdate();
+        
+        
     } else {
         map.put("cdpedido", 0);
     }
@@ -315,11 +323,15 @@ public void Update_nfpedido_inut(VND_NfpedidoBean bean) throws SQLException{
    if (bean.getProtocolo() != null){
        qry += " protocolo = ?,";
    }
-    qry += " where cdpedido = ?::integer ";
-    qry += " and cdnf::integer = ?::integer";       
+   if (bean.getData() != null){
+       qry += " data = ?::timestamp";
+   }
+    qry += " where id_nfpedido = ?::integer";
+//    qry += " where cdpedido = ?::integer ";
+//    qry += " and cdnf::integer = ?::integer";       
 
     
-    qry = qry.replace(", where", " where");
+    //qry = qry.replace(", where", " where");
     
    
    PreparedStatement stmt = conn.prepareStatement(qry);
@@ -342,10 +354,15 @@ public void Update_nfpedido_inut(VND_NfpedidoBean bean) throws SQLException{
        i++;
        stmt.setString(i, bean.getProtocolo());
    }
+   if (bean.getData() != null){
+       i++;
+       stmt.setString(i, bean.getData());
+   }   
    i++;
-   stmt.setInt(i, bean.getCdpedido());
-   i++;
-   stmt.setString(i, bean.getCdnf());
+   stmt.setInt(i, bean.getId_nfpedido());
+//   stmt.setInt(i, bean.getCdpedido());
+//   i++;
+//   stmt.setString(i, bean.getCdnf());
    
 
    
@@ -787,9 +804,11 @@ public void Update_nfpedido_env(VND_NfpedidoBean bean) throws SQLException{
               qry += "flag = ?,";
            }
           
-
-           qry += " where cdpedido = ?";
-
+           if (bean.getId_nfpedido() != null){
+               qry += " where id_nfpedido = ?";
+           } else {
+               qry += " where cdpedido = ?";
+           }
            qry = qry.replace(", where", " where");
            
    PreparedStatement stmt = conn.prepareStatement(qry);
@@ -835,7 +854,12 @@ public void Update_nfpedido_env(VND_NfpedidoBean bean) throws SQLException{
       stmt.setString(i, bean.getFlag());
       i++;
    }
-   stmt.setInt(i, bean.getCdpedido());
+   if (bean.getId_nfpedido() != null){
+    stmt.setInt(i, bean.getId_nfpedido());
+   } else {
+    stmt.setInt(i, bean.getCdpedido());
+   }
+
            
 //   System.out.println(" Pedido: " + bean.getCdpedido());
    

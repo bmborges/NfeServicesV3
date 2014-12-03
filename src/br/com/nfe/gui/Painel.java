@@ -132,7 +132,7 @@ public class Painel extends javax.swing.JFrame {
 
         NfeStatusServico.StartTimer();
         //NfeManifesto.StartTimer();
-        //NfeInutilizacao.StartTimer();
+        NfeInutilizacao.StartTimer();
         NfeConsulta.StartTimer();
         NfeRecepcao.StartTimer();
         //NfeDpec.StartTimer();

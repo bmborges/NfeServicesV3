@@ -4,14 +4,10 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/gui/Painel.java</file>
+            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/util/NFeValidacaoXML.java</file>
             <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/dao/vnd/VND_nfpedidoDAO.java</file>
-            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/services/NfeRecepcao.java</file>
-            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/services/NfeConsulta.java</file>
-            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/util/Util.java</file>
+            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/services/ControleImpressao.java</file>
             <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/dao/adm/ADM_ParamDAO.java</file>
-            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/services/NfeStatusServico.java</file>
-            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/services/NfeRetRecepcao.java</file>
-            <file>file:/C:/Documents%20and%20Settings/root/Meus%20documentos/NetBeansProjects/NfeServicesV3/src/br/com/nfe/util/Database.java</file>
         </group>
     </open-files>
 </project-private>
