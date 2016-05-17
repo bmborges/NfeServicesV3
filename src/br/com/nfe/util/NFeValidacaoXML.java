@@ -48,6 +48,7 @@ public class NFeValidacaoXML {
         {  
             if(e instanceof SAXParseException)  
                 return "Erro no Schema XML na Col: "+ ((SAXParseException) e).getColumnNumber() + " | Lin: " + ((SAXParseException) e).getLineNumber() + " \n" + ((SAXParseException) e).getLocalizedMessage();  
+                //return "Erro no Schema XML na Col: "+ ((SAXParseException) e).getColumnNumber() + " | Lin: " + ((SAXParseException) e).getLineNumber() + " \n" + ((SAXParseException) e);  
             else  
                 return "Unknow error attemping to validate XML.";  
         }  
@@ -67,7 +68,7 @@ public class NFeValidacaoXML {
         return ValidaDoc(stringXml, "cancNFe_v2.00.xsd");
     }
     public static String validaEnvCanc(String stringXml){
-        return ValidaDoc(stringXml, "EnvEventoCancNFe_v1.00.xsd");
+        return ValidaDoc(stringXml, "envEventoCancNFe_v1.00.xsd");
     }
     public static String validaDownloadNfe(String stringXml){
         return ValidaDoc(stringXml, "downloadNFe_v1.00.xsd");

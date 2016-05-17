@@ -7,15 +7,24 @@
 import br.com.nfe.dao.vnd.VND_pedvendaDAO;
 import br.com.nfe.dao.lfs.LFS_atualiza_status_nfeDAO;
 import br.com.nfe.bean.lfs.LFS_atualiza_status_nfeBean;
+import br.com.nfe.bean.vnd.VND_NfpedidoBean;
 import br.com.nfe.dao.adm.ADM_ParamDAO;
 import br.com.nfe.dao.vnd.VND_nfpedidoDAO;
+import static br.com.nfe.services.NfeRecepcao.infnfe;
+import br.com.nfe.util.AssinarXMLsCertfificadoA1;
 import br.com.nfe.util.KStore;
 import br.com.nfe.util.Util;
 import br.inf.portalfiscal.nfe.schema.conssitnfe.ObjectFactory;
 import br.inf.portalfiscal.nfe.schema.conssitnfe.TConsSitNFe;
+import br.inf.portalfiscal.nfe.schema.envinfe.TEnviNFe;
+import br.inf.portalfiscal.nfe.schema.envinfe.TNFe;
+import br.inf.portalfiscal.nfe.schema.retconssitnfe.TProtNFe;
 import br.inf.portalfiscal.nfe.schema.retconssitnfe.TRetConsSitNFe;
 import br.inf.portalfiscal.www.nfe.wsdl.consulta.NfeConsulta2Stub;
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
@@ -27,6 +36,7 @@ import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
 import java.net.Authenticator;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.xml.bind.JAXBContext;
@@ -34,10 +44,21 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.apache.axis2.AxisFault;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
  
 /**
@@ -50,6 +71,7 @@ public class NfeConsulta {
     String xml = "";
     String cStat = "";
     private Unmarshaller unmarshaller;
+    public VND_nfpedidoDAO nfpedido = null;
 
     br.com.nfe.gui.Painel main = null;
     static Timer t = new Timer();
@@ -64,8 +86,8 @@ public class NfeConsulta {
     public static void main(String[] args) throws Exception {
         NfeConsulta c = new NfeConsulta(null);
         VND_nfpedidoDAO idnfe = new VND_nfpedidoDAO();
-        String retorno[] = idnfe.pesquisa_nfpedido(5499535);
-        c.consultanfe(retorno[0],retorno[1]);
+        String retorno[] = idnfe.pesquisa_nfpedido(7321287);
+        c.consultanfe(retorno);
     }
     
 public void StartTimer() throws Exception{
@@ -76,7 +98,7 @@ public void StartTimer() throws Exception{
                     VND_nfpedidoDAO idnfe = new VND_nfpedidoDAO();
                     String retorno[] = idnfe.pesquisa_nfpedido();
                      if (retorno[0].length() > 0){
-                       consultanfe(retorno[0],retorno[1]);
+                       consultanfe(retorno);
                      }
                 } catch (Exception ex) {
                     try {
@@ -133,7 +155,14 @@ public void StartTimer() throws Exception{
 }   
     
     
- public void consultanfe(String idnfe, String cdpedido) throws Exception {
+ public void consultanfe(String ret[]) throws Exception {
+     
+     
+        String idnfe = ret[0];
+        String cdpedido = ret[1];
+        String status_nfe = ret[2];
+        String xml_nfe = ret[3];
+                
          try {
              String codigoDoEstado = idnfe.substring(0, 2);;
              
@@ -214,7 +243,10 @@ public void StartTimer() throws Exception{
              if (retorno.length() > 0) {
                     context = JAXBContext.newInstance(TRetConsSitNFe.class);  
                     unmarshaller = context.createUnmarshaller();
-                    retsit = unmarshaller.unmarshal(new StreamSource(new StringReader(retorno)), TRetConsSitNFe.class).getValue();
+                    try {
+                        retsit = unmarshaller.unmarshal(new StreamSource(new StringReader(retorno)), TRetConsSitNFe.class).getValue();
+                    } catch (Exception e) {
+                    }
                     
 //                    main.CarregaJtxa(retsit.getCStat(),Color.red);
 
@@ -226,10 +258,11 @@ public void StartTimer() throws Exception{
                 nmArq = "env_" + cdpedido;
              } else if (Integer.parseInt(cStat) == 101){
                 nmArq = "can2_" + cdpedido;
-             } else {
+             } else if (Integer.parseInt(cStat) == 102){
                 nmArq = "inu_" + cdpedido;
              }
-
+                VND_pedvendaDAO atu_pedvenda = new VND_pedvendaDAO();
+                
              if (Integer.parseInt(cStat) == 100 || Integer.parseInt(cStat) == 101){
                 tpAmb = retorno.substring(retorno.indexOf("<tpAmb>") + 7, retorno.indexOf("</tpAmb>"));
                 verAplic = retorno.substring(retorno.indexOf("<verAplic>") + 10, retorno.indexOf("</verAplic>"));
@@ -240,6 +273,104 @@ public void StartTimer() throws Exception{
 
                 obs_nfe = nfe + separador + tpAmb + separador + verAplic + separador + chNFe + separador + dhRecbto;
                 obs_nfe +=  separador + nProt + separador + separador + cStat + separador + xMotivo + separador + "1" + separador + separador;
+                
+                if (Integer.parseInt(status_nfe) == 539){
+                    VND_nfpedidoDAO pedido_dao = new VND_nfpedidoDAO();
+                    VND_NfpedidoBean pedido_bean = new VND_NfpedidoBean();                                     
+                    TProtNFe protnfe = new TProtNFe();
+
+                    int cstat = Integer.parseInt(retsit.getCStat());
+                    pedido_bean.setObs_nfe(null);
+                    pedido_bean.setStatus_nfe(cstat);
+                    pedido_bean.setCdpedido(Integer.parseInt(cdpedido));
+                    pedido_dao.Update_nfpedido_env(pedido_bean);
+
+                    HashMap pedido_hm = new HashMap();
+                    pedido_hm = pedido_dao.pesquisa_nfpedido_cdpedido(Integer.parseInt(cdpedido));
+
+                    try {
+                       MontaXML(pedido_hm);
+                    } catch (Exception e) {
+                       main.CarregaJtxa(e.toString(),Color.RED);
+                    }
+
+                       TEnviNFe envnfe = new TEnviNFe();
+                       envnfe.setIdLote("1");
+
+                       TNFe Tnfe = new TNFe();
+
+                       Tnfe.setInfNFe(infnfe);
+
+                       envnfe.getNFe().add(Tnfe);             
+                       envnfe.setVersao("3.10");
+                       envnfe.setIndSinc("0");
+
+                       context = null;
+
+                      try {
+                          StringWriter out = new StringWriter();
+
+                          context = JAXBContext.newInstance(TEnviNFe.class);
+                          Marshaller marshaller = context.createMarshaller();
+                          JAXBElement<TEnviNFe> element = new br.inf.portalfiscal.nfe.schema.envinfe.ObjectFactory().createEnviNFe(envnfe);
+
+                          marshaller.setProperty(
+                              javax.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT,
+                              Boolean.TRUE
+                          );
+
+                          marshaller.marshal(element,new StreamResult(out));
+
+                          xml = out.toString();
+
+                          xml = pedido_dao.remove_acento(xml);
+
+                          xml = xml.replace("xmlns:ns2=\"http://www.w3.org/2000/09/xmldsig#\"", "");
+
+              //            System.out.println(xml);
+
+                          AssinarXMLsCertfificadoA1 AssinarXml = new AssinarXMLsCertfificadoA1();    
+                          xml = AssinarXml.assinaXml(xml, "assinaEnvNFe") ;
+
+                      } catch (JAXBException e) {
+                          System.out.println(e);
+                      }                    
+                    
+                    protnfe.setInfProt(retsit.getProtNFe().getInfProt());
+
+                    cstat = Integer.parseInt(protnfe.getInfProt().getCStat());
+                    String protocolo = protnfe.getInfProt().getNProt();
+
+                    Document document = documentFactory(xml);
+                    NodeList nodeListNfe = document.getDocumentElement().getElementsByTagName("NFe");
+                    NodeList nodeListInfNfe = document.getElementsByTagName("infNFe");
+
+                    Element el = (Element) nodeListInfNfe.item(0);
+                    String chaveNFe = el.getAttribute("Id");
+
+                    String xmlNFe = outputXML(nodeListNfe.item(0));
+                    String xmlProtNFe = getProtNFe(retorno, chaveNFe);
+
+                    pedido_bean.setXml_nfe(buildNFeProc(xmlNFe, xmlProtNFe));
+                    pedido_bean.setProtocolo(protocolo);
+                    pedido_bean.setStatus_nfe(cstat);
+                    pedido_bean.setSituacaonf("N");
+                    
+                    try {
+                        main.CarregaJtxa(">>> Update Consulta RecepcaoNfe....:" + cdpedido,Color.BLACK);
+                    } catch (Exception e) {
+                    }
+                    
+                    pedido_dao.Update_nfpedido_env(pedido_bean);
+
+                }
+                
+             } else if (Integer.parseInt(cStat) == 562){
+                String retChNFe = "<retConsSitNFe xmlns=\"http://www.portalfiscal.inf.br/nfe\" xmlns:ns2=\"http://www.w3.org/2000/09/xmldsig#\" versao=\"3.10\"><tpAmb>1</tpAmb><verAplic>GO3.0</verAplic><cStat>562</cStat><xMotivo>Rejeição: Código numérico informado na Chave de Acesso difere do Código Númerico da NF-e[chNFe:52150202233732000157550000001184571072418203]</xMotivo><cUF>52</cUF><dhRecbto>2015-02-25T08:57:58-03:00</dhRecbto><chNFe>52150202233732000157550000001184574072418208</chNFe></retConsSitNFe>";
+                retChNFe = retorno.substring(retorno.indexOf("NF-e[chNFe:") + "NF-e[chNFe:".length(), retorno.indexOf("]</xMotivo>"));
+                
+                boolean ok = atu_pedvenda.update_idnfe(Integer.parseInt(cdpedido), retChNFe);
+                
              } else {
                 tpAmb = retorno.substring(retorno.indexOf("<tpAmb>") + 7, retorno.indexOf("</tpAmb>"));
                 verAplic = retorno.substring(retorno.indexOf("<verAplic>") + 10, retorno.indexOf("</verAplic>"));
@@ -257,7 +388,7 @@ public void StartTimer() throws Exception{
                   LFS_atualiza_status_nfeBean bean = new LFS_atualiza_status_nfeBean();
                   LFS_atualiza_status_nfeDAO bk = new LFS_atualiza_status_nfeDAO();
 
-                  VND_pedvendaDAO atu_pedvenda = new VND_pedvendaDAO();
+                  
                   int numpedido = 0 ;
                   Boolean atupedido = false;
                   
@@ -281,5 +412,89 @@ public void StartTimer() throws Exception{
              e.printStackTrace();
          }
      }
+ private void MontaXML(HashMap pedido_hm) throws Exception{
+    
+    infnfe = new TNFe.InfNFe();
+    
+    int cdpedido = Integer.parseInt(pedido_hm.get("cdpedido").toString());
+     
+    //A - Dados da Nota Fiscal eletrônica
+
+    infnfe.setVersao("3.10");      
+    infnfe.setId("NFe"+ pedido_hm.get("idnfe")); // chave na nfe
+    
+    //B - Identificação da Nota Fiscal eletrônica
+    nfpedido.pesquisa_nfpedido_env_ide(cdpedido);
+
+    //C - Identificação do Emitente da Nota Fiscal eletrônica 
+    nfpedido.pesquisa_nfpedido_env_emit(cdpedido);
+
+    //D - Identificação do Fisco Emitente da NF-e
+    
+    //E - Identificação do Destinatário da Nota Fiscal eletrônica
+    nfpedido.pesquisa_nfpedido_env_dest(cdpedido);    
+
+    //F - Identificação do Local de Retirada
+    //G - Identificação do Local de Entrega                 
+    
+    //H - Detalhamento de Produtos e Serviços da NF-e
+    nfpedido.pesquisa_nfpedido_env_det(cdpedido);
+    
+    //W - Valores Totais da NF-e
+    nfpedido.pesquisa_nfpedido_env_total(cdpedido);
+
+    //X - Informações do Transporte da NF-e
+    nfpedido.pesquisa_nfpedido_env_transp(cdpedido);
+
+    //Y – Dados da Cobrança
+    nfpedido.pesquisa_nfpedido_env_cob(cdpedido);
+    
+    //Z - Informações Adicionais da NF-e
+    nfpedido.pesquisa_nfpedido_env_infadic(cdpedido);
+    
+     
+ }
+    private static Document documentFactory(String xml) throws SAXException,  
+            IOException, ParserConfigurationException {  
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+        factory.setNamespaceAware(true);  
+        Document document = factory.newDocumentBuilder().parse(  
+                new ByteArrayInputStream(xml.getBytes()));  
+        return document;  
+    }
+    private static String buildNFeProc(String xmlNFe, String xmlProtNFe) {  
+        StringBuilder nfeProc = new StringBuilder();  
+        nfeProc.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")  
+            .append("<nfeProc versao=\"2.00\" xmlns=\"http://www.portalfiscal.inf.br/nfe\">")  
+            .append(xmlNFe)  
+            .append(xmlProtNFe)  
+            .append("</nfeProc>");  
+        return nfeProc.toString();  
+    }
+    private static String outputXML(Node node) throws TransformerException {  
+        ByteArrayOutputStream os = new ByteArrayOutputStream();  
+        TransformerFactory tf = TransformerFactory.newInstance();  
+        Transformer trans = tf.newTransformer();  
+        trans.transform(new DOMSource(node), new StreamResult(os));  
+        String xml = os.toString();  
+        if ((xml != null) && (!"".equals(xml))) {  
+            xml = xml.replaceAll("<\\?xml version=\"1.0\" encoding=\"UTF-8\"\\?>", "");  
+        }  
+        return xml;  
+    }
+    private static String getProtNFe(String xml, String chaveNFe) throws SAXException,   
+        IOException, ParserConfigurationException, TransformerException {  
+        Document document = documentFactory(xml);  
+        NodeList nodeListProtNFe = document.getDocumentElement().getElementsByTagName("protNFe");  
+        NodeList nodeListChNFe = document.getElementsByTagName("chNFe");  
+        for (int i = 0; i < nodeListProtNFe.getLength(); i++) {  
+            Element el = (Element) nodeListChNFe.item(i);  
+            String chaveProtNFe = el.getTextContent();  
+            if (chaveNFe.contains(chaveProtNFe)) {  
+                return outputXML(nodeListProtNFe.item(i));  
+            }  
+        }         
+        return "";  
+    }    
 }
 

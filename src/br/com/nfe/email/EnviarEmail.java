@@ -20,15 +20,16 @@ public class EnviarEmail {
         this.main = main;
     }
 
-
-
-  public void Enviar(String xml_nfe, byte[] pdf, String idnfe, String tipo) throws Exception{
+  public void Enviar(String xml_nfe, byte[] pdf, String idnfe, byte[] pdfBoleto, String tipo) throws Exception{
 
       PAR_ParceiroDAO parceiro_dao = new PAR_ParceiroDAO();
       SendMail mail = new SendMail();
       String p[] = null;
       String titulo = "Nota Fiscal Eletronica - Cooperativa Agrovale";
       
+      if (pdfBoleto != null){
+          titulo = "Boleto e Nota Fiscal Eletronica - Cooperativa Agrovale";
+      }
         
       p = parceiro_dao.pesquisa_email(idnfe).toString().split(";");
       
@@ -36,13 +37,25 @@ public class EnviarEmail {
       
       for (int i = 0; i < p.length; i++) {
         if(p[i].trim().length() > 0){  
-            main.CarregaJtxa("Email para:" + p[i].trim() + " Idnfe: " + idnfe,new Color(0, 100, 0));
-            mail.sendMail("agrovale@agrovale.com.br", p[i].trim(), titulo, msg, xml_nfe, pdf, idnfe);
+            try {
+                if (pdfBoleto != null){
+                    main.CarregaJtxa("Email Nota e Boleto para:" + p[i].trim() + " Idnfe: " + idnfe,new Color(0, 100, 0));
+                } else {
+                    main.CarregaJtxa("Email Nota para:" + p[i].trim() + " Idnfe: " + idnfe,new Color(0, 100, 0));
+                }
+            } catch (Exception e) {
+                if (pdfBoleto != null){
+                    System.out.println("Email Nota e Boleto para:" + p[i].trim() + " Idnfe: " + idnfe);
+                } else {
+                    System.out.println("Email Nota para:" + p[i].trim() + " Idnfe: " + idnfe);
+                }
+            }
+            mail.sendMail("agrovale@agrovale.com.br", p[i].trim(), titulo, msg, xml_nfe, pdf, idnfe, pdfBoleto);
+//            mail.sendMail("agrovale@agrovale.com.br", "ctin@agrovale.com.br", titulo, msg, xml_nfe, pdf, idnfe, pdfBoleto);
         }
       }
-
-
   }
+  
   private void SetMsg(String tipo){
       msg = "*** Esse é um e-mail automático. Não é necessário respondê-lo ***\n";
       if (tipo.contains("env")){

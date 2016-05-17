@@ -80,8 +80,8 @@ public class NfeCCe {
         NfeCCe cce = new NfeCCe(null);
         VND_CartaDAO ccDao = new VND_CartaDAO();
         VND_CartaBean ccBean = new VND_CartaBean();
-//        ccBean = ccDao.pesquisa_carta();
-        ccBean = ccDao.pesquisa_cartaCdpedido(6748605);
+        ccBean = ccDao.pesquisa_carta();
+//        ccBean = ccDao.pesquisa_cartaCdpedido(8145268);
         if (ccBean.getCdpedido() > 0){
             cce.EventoCartaCorrecao(ccBean);
         }
@@ -209,7 +209,10 @@ public void StartTimer() throws Exception{
                         dao_carta.atualiza_carta(beanCC);
                     }
                     String retorno = Envio(xml, url, endereco[1], endereco[2]);
-                    main.CarregaJtxa(retorno,Color.RED);
+                    try {
+                        main.CarregaJtxa(retorno,Color.RED);
+                    } catch (Exception e) {
+                    }
                     
                     if (retorno.length() > 0){
                         context = JAXBContext.newInstance(TRetEnvEvento.class);  

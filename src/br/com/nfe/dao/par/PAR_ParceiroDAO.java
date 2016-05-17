@@ -57,6 +57,30 @@ public String pesquisa_email(String idnfe) throws SQLException {
    return retorno;
 
 }
+public String pesquisa_email_idparceiro(int id_parceiro) throws SQLException {
+   
+   String qry = "select email from par_parceiro"
+           + " where idparceiro = ?"
+           + " and position('@' in email) > 0";
+           //+ " where idparceiro = 21023";
+   
+   PreparedStatement stmt = conn.prepareStatement(qry);
+   
+   stmt.setInt(1, id_parceiro);
+   
+   ResultSet rs = stmt.executeQuery();
+   
+   String retorno = "";
+   if (rs.next()) {
+       retorno = rs.getString("email");
+   }
+
+   rs.close();
+   stmt.close();
+
+   return retorno;
+
+}
 
 
     

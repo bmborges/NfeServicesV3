@@ -71,7 +71,7 @@ public class NfeRecepcao {
     }
     public static void main(String[] args) throws Exception {
         NfeRecepcao r = new NfeRecepcao(null);
-        r.testeXML(7052447);
+        r.testeXML(8163034);
 
 //        HashMap pedido_hm = new HashMap();
 //        VND_nfpedidoDAO nfpedido = new VND_nfpedidoDAO();
@@ -80,7 +80,13 @@ public class NfeRecepcao {
 //            r.Recepcao(pedido_hm,false);
 //        }
 
-
+//        HashMap pedido_hm = new HashMap();
+//        VND_nfpedidoDAO nfpedido = new VND_nfpedidoDAO();
+//        pedido_hm = nfpedido.pesquisa_nfpedido_envDEPC(7275138);
+//        if (Integer.parseInt(pedido_hm.get("cdpedido").toString()) > 0){
+//            r.Recepcao(pedido_hm,true);
+//        }
+        
     }
    
 public void StartTimer() throws Exception{
@@ -313,8 +319,11 @@ public void StartTimer() throws Exception{
             } catch (JAXBException e) {
                 main.CarregaJtxa(e.toString(),Color.RED);
             }
-        
-            main.CarregaJtxa(endereco[0],Color.BLUE);
+            try {
+                main.CarregaJtxa(endereco[0],Color.BLUE);
+            } catch (Exception e) {
+                System.out.println(endereco[0]);
+            }
            
             VND_NfpedidoBean pedido_bean = new VND_NfpedidoBean();
             
@@ -325,10 +334,12 @@ public void StartTimer() throws Exception{
                 main.CarregaJtxa(validation.replace("cvc-pattern-valid: ", ""),Color.RED);
                 nfpedido.insert_nfpedido_rejeicao(cdpedido, validation.replace("cvc-pattern-valid: ", ""), null);
                 
-                pedido_bean.setStatus_nfe(0);
-                pedido_bean.setSituacaonf("N");
-                pedido_bean.setXml_nfe(xml);
-                pedido_dao.Update_nfpedido_env(pedido_bean);
+                if (!dpec){
+                    pedido_bean.setStatus_nfe(0);
+                    pedido_bean.setSituacaonf("N");
+                    pedido_bean.setXml_nfe(xml);
+                    pedido_dao.Update_nfpedido_env(pedido_bean);
+                }
             } else {
                  /* Declaração variaveis de retorno */
 
@@ -358,7 +369,7 @@ public void StartTimer() throws Exception{
                         pedido_bean.setXml_nfe(xml);
                         pedido_bean.setTpemis(4);
                         main.CarregaJtxa(">>>DPEC....: Pedido: "+ cdpedido,Color.GREEN);
-                        //pedido_dao.Update_nfpedido_env(pedido_bean);
+                        pedido_dao.Update_nfpedido_env(pedido_bean);
                     }
                 }
 

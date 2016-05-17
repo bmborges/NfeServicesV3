@@ -97,7 +97,7 @@ import java.awt.Color;
              //get("hnfe.sefaz.ba.gov.br", 443, ks);
              //get("nfeh.sefaz.ce.gov.br", 443, ks);
              get("nfe.sefaz.go.gov.br", 443, ks);
-             get("homolog.sefaz.go.gov.br", 443, ks);
+//             get("homolog.sefaz.go.gov.br", 443, ks);
              //get("hnfe.fazenda.mg.gov.br", 443, ks);
              //get("homologacao.nfe.ms.gov.br", 443, ks);
              //get("homologacao.sefaz.mt.gov.br", 443, ks);
@@ -108,7 +108,7 @@ import java.awt.Color;
              //get("hom.nfe.fazenda.gov.br", 443, ks);
              //get("hom.sefazvirtual.fazenda.gov.br", 443, ks);
              //get("homologacao.nfe.sefazvirtual.rs.gov.br", 443, ks);
-//             get("www.nfe.fazenda.gov.br",443,ks);
+//             get("nfe.fazenda.gov.br",443,ks);
 //             get("hom.sefazvirtual.fazenda.gov.br",443,ks);
 
              File cafile = new File(JSSECACERTS);

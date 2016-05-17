@@ -84,7 +84,7 @@ public class NfeRetRecepcao {
         NfeRetRecepcao r = new NfeRetRecepcao(null);
         HashMap pedido_hm = new HashMap();
         VND_nfpedidoDAO pedido_dao = new VND_nfpedidoDAO();
-        pedido_hm = pedido_dao.pesquisa_nfpedido_ret_cdpedido(7052447);
+        pedido_hm = pedido_dao.pesquisa_nfpedido_ret_cdpedido(7624758);
         if (Integer.parseInt(pedido_hm.get("cdpedido").toString()) > 0 ){
             r.RetRecepcao(pedido_hm);
         }
@@ -284,7 +284,9 @@ public void StartTimer() throws Exception{
 
 
                             ControleImpressao c = new ControleImpressao(main);
-                            c.PesquisaXML(cdpedido, pedido_bean.getXml_nfe());
+                            // 0 no terceiro parametro envia so a nota
+                            // 1 no terceiro parametro envia a nota e o boleto
+                            c.PesquisaXML(cdpedido, pedido_bean.getXml_nfe(),0);
 
 
                           } else {
@@ -322,7 +324,7 @@ public void StartTimer() throws Exception{
     private static String buildNFeProc(String xmlNFe, String xmlProtNFe) {  
         StringBuilder nfeProc = new StringBuilder();  
         nfeProc.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")  
-            .append("<nfeProc versao=\"2.00\" xmlns=\"http://www.portalfiscal.inf.br/nfe\">")  
+            .append("<nfeProc versao=\"3.10\" xmlns=\"http://www.portalfiscal.inf.br/nfe\">")  
             .append(xmlNFe)  
             .append(xmlProtNFe)  
             .append("</nfeProc>");  

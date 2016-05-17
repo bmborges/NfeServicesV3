@@ -264,6 +264,7 @@ public class AssinarXMLsCertfificadoA1 {
         NodeList elements = document.getElementsByTagName("infEvento");  
         org.w3c.dom.Element el = (org.w3c.dom.Element) elements.item(indexNFe);  
         String id = el.getAttribute("Id");  
+        el.setIdAttribute("Id", true);
         
         Reference ref = (Reference) fac.newReference("#" + id,  
                 fac.newDigestMethod(DigestMethod.SHA1, null), transformList,  
@@ -324,7 +325,8 @@ public class AssinarXMLsCertfificadoA1 {
   
         NodeList elements = document.getElementsByTagName(tag);  
         org.w3c.dom.Element el = (org.w3c.dom.Element) elements.item(0);  
-        String id = el.getAttribute("Id");  
+        String id = el.getAttribute("Id");
+        el.setIdAttribute("Id", true);
   
         Reference ref = signatureFactory.newReference("#" + id,  
                 signatureFactory.newDigestMethod(DigestMethod.SHA1, null),  

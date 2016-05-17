@@ -48,7 +48,7 @@ public class SendMail {
         this.mailSMTPServerPort = mailSMTPServerPort;  
     }  
       
-    public void sendMail(String from, String to, String subject, String message, String xml_nfe, byte[] pdf, String idnfe) {  
+    public void sendMail(String from, String to, String subject, String message, String xml_nfe, byte[] pdf, String idnfe, byte[] pdfBoleto) {  
           
         Properties props = new Properties();  
   
@@ -97,6 +97,7 @@ public class SendMail {
 //            msg.setContent(message,"multipart/form-data");
             msg.setSentDate(new Date());
 
+            msg.setHeader("Content-Type", "text/html; charset=\"iso-8859-1\"");
             // cria a primeira parte da mensagem
             MimeBodyPart mbp1 = new MimeBodyPart();
             mbp1.setText(message);
@@ -111,6 +112,7 @@ public class SendMail {
             // cria a segunda parte da mensage
             MimeBodyPart xmlBodyPart = null;
             MimeBodyPart pdfBodyPart = null; 
+            MimeBodyPart pdfBoletoBodyPart = null; 
             
             if(xml_nfe != null){       
                 xmlBodyPart = new MimeBodyPart();
@@ -127,6 +129,14 @@ public class SendMail {
                 pdfBodyPart.setFileName("Nfe"+idnfe+".pdf");
                 
                 mp.addBodyPart(pdfBodyPart);
+            }
+            if(pdfBoleto != null){
+                DataSource dataSource = new ByteArrayDataSource(pdfBoleto, "application/pdf");
+                pdfBoletoBodyPart = new MimeBodyPart();
+                pdfBoletoBodyPart.setDataHandler(new DataHandler(dataSource));
+                pdfBoletoBodyPart.setFileName("BoletoNfe"+idnfe+".pdf");
+                
+                mp.addBodyPart(pdfBoletoBodyPart);
             }
             
             msg.setContent(mp);

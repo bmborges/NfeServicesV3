@@ -19,7 +19,9 @@ public class Database {
 //            password,
 //            classe;
   private static String
-	host = "jdbc:postgresql://192.168.1.15:5573/sief_copia",
+	host = "jdbc:postgresql://192.168.1.10:5573/sief",	
+//        host = "jdbc:postgresql://localhost:5573/sief",
+
 	user = "postgres",
 	password = "K@lif@1",
 	classe = "org.postgresql.Driver";

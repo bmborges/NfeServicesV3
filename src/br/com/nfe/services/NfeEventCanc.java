@@ -69,7 +69,7 @@ public class NfeEventCanc {
         NfeEventCanc c = new NfeEventCanc(null);
         HashMap pedido_hm = new HashMap();
         VND_nfpedidoDAO pedido_dao = new VND_nfpedidoDAO();
-        pedido_hm = pedido_dao.pesquisa_nfpedido_canc_cdpedido(6165370);
+        pedido_hm = pedido_dao.pesquisa_nfpedido_canc_cdpedido(8217870);
         c.Cancelamento(pedido_hm);
     }
 
@@ -120,7 +120,11 @@ public class NfeEventCanc {
     try {            
         result = stub.nfeRecepcaoEvento(dadosMsg, nfeCabecMsgE);   
         Line = result.getExtraElement().toString();
-         main.CarregaJtxa(Line,Color.RED);
+        try {
+            main.CarregaJtxa(Line,Color.RED);
+        } catch (Exception e) {
+            System.out.println(Line);
+        }
      } catch (Exception e) {
          try {
           main.CarregaJtxa("Erro Envio NfeEventCanc : " + e.toString(),Color.RED);

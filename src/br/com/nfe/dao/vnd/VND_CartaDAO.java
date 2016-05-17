@@ -35,7 +35,10 @@ public VND_CartaBean pesquisa_carta() throws SQLException{
     VND_CartaBean bean = null;
     String replace;
 
-    String qry = "select distinct cdpedido from vnd_carta where status_nfe = 0 limit 1";
+    String qry = "select distinct cdpedido " +
+"              from vnd_carta c" +
+"              inner join vnd_nfpedido nfp using (cdpedido)" +
+"             where c.status_nfe = 0 and nfp.status_nfe = 100 limit 1";
 
     PreparedStatement stmt = conn.prepareStatement(qry);
 

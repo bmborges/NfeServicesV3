@@ -152,9 +152,16 @@ public class NfeManifesto {
              ADM_ParamDAO dao = new ADM_ParamDAO();
              ADM_ParamBean bean = new ADM_ParamBean();
 
-             bean = dao.getDados_webservice("WebserverNfeManifesto","52");
+             String[] endereco = null;
+             endereco = dao.pesquisa_webservice("WebserverNfeManifestoV3","52");
+
+             if (endereco[0] == null || endereco[0].length() <= 0) {
+                 main.CarregaJtxa("Endereço Manifesto não Localizado",Color.MAGENTA);
+                 return;
+             }
+               
+             URL url = new URL(endereco[0]);             
              
-             URL url = new URL(bean.getValorparam());
              try {
                  MontaXML(beanE);
              } catch (Exception e) {
@@ -194,7 +201,7 @@ public class NfeManifesto {
             } else {
                 try {
 
-                    String retorno = Envio(xml, url, bean.getCodigo().toString(), FormataValores.formataVr_Float(bean.getValor(),"0.00"));
+                    String retorno = Envio(xml, url, endereco[1], endereco[2]);
                     try {
                         main.CarregaJtxa(retorno,Color.BLACK);
                     } catch (Exception e) {

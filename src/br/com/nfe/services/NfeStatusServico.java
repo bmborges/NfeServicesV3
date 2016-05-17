@@ -22,6 +22,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.security.Security;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
@@ -91,6 +92,11 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
         Line = result.getExtraElement().toString(); 
     } catch (Exception e) {
         main.CarregaJtxa("Erro NfeStatusServico : " + e,Color.RED);
+        try {
+            u.UpdateTpEmiss(4);
+        } catch (SQLException ex) {
+            Logger.getLogger(NfeStatusServico.class.getName()).log(Level.SEVERE, null, ex);
+        }
      } 
     return Line;
 }
@@ -173,6 +179,13 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
                 context = JAXBContext.newInstance(TRetConsStatServ.class);  
                 unmarshaller = context.createUnmarshaller();
                 TRetConsStatServ retStatServ  = unmarshaller.unmarshal(new StreamSource(new StringReader(retorno)), TRetConsStatServ.class).getValue();
+                
+                if(Integer.valueOf(retStatServ.getCStat()) == 107){
+                    u.UpdateTpEmiss(1);
+                } else {
+                    u.UpdateTpEmiss(4);
+                }
+                
                 try {
                     main.CarregaJtxa(">>> NfeStatusServico....: " + retStatServ.getCStat(),Color.BLUE);
                 } catch (Exception e) {
@@ -180,6 +193,7 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
                 }
             }
         } catch (Exception e) {
+
             if(main != null){
                 main.CarregaJtxa(e.toString(),Color.RED);
             } else {
@@ -191,17 +205,17 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
     }
 private void MontaXML() throws Exception{
     
-            /** 
-             * Estrutura XML Consulta Status Servico. 
-             */  
-            statserv = new TConsStatServ();  
-            /* 
-             * Versão do leiaute. 
-             */  
-            statserv.setVersao("3.10");  
-            statserv.setTpAmb(String.valueOf(u.TpAmb()));
-            statserv.setCUF("52");
-            statserv.setXServ("STATUS");
+    /** 
+     * Estrutura XML Consulta Status Servico. 
+     */  
+    statserv = new TConsStatServ();  
+    /* 
+     * Versão do leiaute. 
+     */  
+    statserv.setVersao("3.10");  
+    statserv.setTpAmb(String.valueOf(u.TpAmb()));
+    statserv.setCUF("52");
+    statserv.setXServ("STATUS");
   
      
  }

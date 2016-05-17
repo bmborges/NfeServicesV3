@@ -73,4 +73,25 @@ public String select_idnfe(int cdpedido) throws SQLException{
 
 }
 
+public boolean update_idnfe(int cdpedido, String idnfe) throws SQLException{
+    String qry = "update vnd_pedvenda set idnfe = ? where cdpedido = ?";
+
+    PreparedStatement stmt = conn.prepareStatement(qry);
+
+    stmt.setString(1, idnfe);
+    stmt.setInt(2, cdpedido);
+
+    int ret = stmt.executeUpdate();
+
+    //System.out.println(">>>Select....: " + stmt.toString());
+
+    stmt.close();
+    
+    if (ret > 0) {
+       return true;
+    } else {
+       return false;
+    }
+}
+
 }

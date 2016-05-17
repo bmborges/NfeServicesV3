@@ -46,15 +46,22 @@ public class VND_nfpedidoDAO {
          }
             this.conn = conn;
          }
+      
+    public static void main(String[] args) throws Exception {
+        VND_nfpedidoDAO nf = new VND_nfpedidoDAO();
+        nf.pesquisa_nfpedido_env_infadic(7272231);
+    }
+      
 private void definirColunas() {
     strColunas = "cdpedido,"
             + "cdnf,"
             + "data";
   }
 public String[] pesquisa_nfpedido() throws SQLException{
-    String qry = "select idnfe, ped.cdpedido from vnd_pedvenda ped";
-    qry += " inner join vnd_nfpedido nfp using (cdpedido)";
-    qry += " where ped.idnfe is not null  and (nfp.flag::integer >= 1 and nfp.flag::integer < 9)"
+    String qry = "select idnfe, ped.cdpedido, status_nfe, xml_nfe"
+            + " from vnd_pedvenda ped"
+            + " inner join vnd_nfpedido nfp using (cdpedido)"
+            + " where ped.idnfe is not null  and (nfp.flag::integer >= 1 and nfp.flag::integer < 9)"
             + " order by flag ,nfp.id_nfpedido limit 1 ";
   
     
@@ -65,12 +72,14 @@ public String[] pesquisa_nfpedido() throws SQLException{
 
     //System.out.println(">>>Select....: " + stmt.toString());
 
-    String retorno[] = new String[2];
+    String retorno[] = new String[4];
     retorno[0]= "";
 
     if (rs.next()) {
        retorno[0] = rs.getString("idnfe");
        retorno[1] = rs.getString("cdpedido");
+       retorno[2] = rs.getString("status_nfe");
+       retorno[3] = rs.getString("xml_nfe");
     }
     rs.close();
     stmt.close();
@@ -80,7 +89,7 @@ public String[] pesquisa_nfpedido() throws SQLException{
 
 }
 public String[] pesquisa_nfpedido(int cdpedido) throws SQLException{
-    String qry = "select idnfe, ped.cdpedido from vnd_pedvenda ped";
+    String qry = "select idnfe, ped.cdpedido, status_nfe, xml_nfe from vnd_pedvenda ped";
     qry += " inner join vnd_nfpedido nfp using (cdpedido)";
     qry += " where cdpedido = ? ";
   
@@ -92,12 +101,14 @@ public String[] pesquisa_nfpedido(int cdpedido) throws SQLException{
 
     //System.out.println(">>>Select....: " + stmt.toString());
 
-    String retorno[] = new String[2];
+    String retorno[] = new String[4];
     retorno[0]= "";
 
     if (rs.next()) {
        retorno[0] = rs.getString("idnfe");
        retorno[1] = rs.getString("cdpedido");
+       retorno[2] = rs.getString("status_nfe");
+       retorno[3] = rs.getString("xml_nfe");
     }
     rs.close();
     stmt.close();
@@ -126,6 +137,47 @@ public String pesquisa_protocolo(int cdpedido) throws SQLException{
     stmt.close();
 
     return retorno;
+
+}
+public int pesquisa_boleto(int cdpedido) throws SQLException{
+    String qry = "select distinct cdseqpgto, idoperador_cx, p.idestabelecimen, bvc.idcontabco\n" +
+            " from vnd_pedvenda p\n" +
+            "	inner join fin_formapgt f using (cdseqpgto)\n" +
+            "	inner join bco_view_ctabanco bvc on (bvc.idestabelecimen = p.idestabelecimen)\n" +
+            " where cdcondpgto = 5\n" +
+            " and gera_boleto_nfe = 'V'\n" +
+            " and cdpedido = ?";
+    
+    PreparedStatement stmt = conn.prepareStatement(qry);
+    stmt.setInt(1, cdpedido);
+    
+    ResultSet rs = stmt.executeQuery();
+
+    //System.out.println(">>>Select....: " + stmt.toString());
+
+    int iRetorno = 0;
+    
+    if (rs.next()) {
+        String queryBoleto = "select fin_emite_boleto(?, ?, ?);";
+        
+        PreparedStatement stmtEmiteBoleto = conn.prepareStatement(queryBoleto);
+        stmtEmiteBoleto.setInt(1, rs.getInt("cdseqpgto"));
+        stmtEmiteBoleto.setInt(2, rs.getInt("idoperador_cx"));
+        stmtEmiteBoleto.setInt(3, rs.getInt("idcontabco"));
+       
+        ResultSet rsBoleto = stmtEmiteBoleto.executeQuery();
+        if(rsBoleto.next()){
+            iRetorno = rs.getInt("cdseqpgto");
+        }
+        
+        rsBoleto.close();
+        stmtEmiteBoleto.close();
+        
+    }
+    rs.close();
+    stmt.close();
+
+    return iRetorno;
 
 }
 
@@ -258,6 +310,74 @@ public HashMap pesquisa_nfpedido_dpec() throws SQLException, Exception{
 
     PreparedStatement stmt = conn.prepareStatement(qry);
 
+
+    ResultSet rs = stmt.executeQuery();
+    HashMap map = new HashMap();
+
+    if (rs.next()) {
+
+        
+        
+        map.put("cdpedido", rs.getInt(1));
+        map.put("iduf", rs.getString(2));
+        
+        replace = rs.getString(3);
+        replace = replace.replace(".", "");
+        replace = replace.replace("/", "");
+        replace = replace.replace("-", "");
+        
+        map.put("cnpj", replace);
+        
+        replace = rs.getString(4);
+        replace = replace.replace(".", "");
+        replace = replace.replace("/", "");
+        replace = replace.replace("-", "");
+        
+        map.put("inscricaoestad", replace);
+        map.put("idnfe", rs.getString(5));
+        
+        replace = rs.getString(6);
+        replace = replace.replace(".", "");
+        replace = replace.replace("/", "");
+        replace = replace.replace("-", "");
+        
+        map.put("cnpj_pedido", replace);
+        map.put("uf", rs.getString(7));
+        map.put("totalpedido", rs.getString(8));
+        map.put("totalicms", rs.getString(9));
+        map.put("totalicmssubst", rs.getString(10));
+
+        
+    } else {
+        map.put("cdpedido", 0);
+    }
+    
+//    System.out.println(">>>Select....: " + stmt);
+    
+    rs.close();
+    stmt.close();
+
+    return map;
+
+}
+public HashMap pesquisa_nfpedido_dpec(int cdpedido) throws SQLException, Exception{
+     String replace = "";
+   
+    String qry = "select cdpedido, iduf, e.cnpj, e.inscricaoestad, idnfe, cnpj_pedido, pv.uf, "
+            + " trim(to_char(totalpedido,'999999999999990.00')) as totalpedido,"
+            + " trim(to_char(totalicms,'999999999999990.00')) as totalicms,"
+            + " trim(to_char(totalicmssubst,'999999999999990.00')) as totalicmssubst"
+            + "	from vnd_nfpedido nf"
+            + " inner join vnd_pedvenda pv using (cdpedido)"
+            + " inner join cdc_estabelecim e using (idestabelecimen)"
+            + " inner join adm_estado es on (e.uf = es.uf )"
+            //+ " where length(idnfe) = 44 and idnfe is not null "
+            + " where cdpedido = ?"
+            + " order by date(dt_pedido) desc, cdpedido limit 1";
+
+
+    PreparedStatement stmt = conn.prepareStatement(qry);
+    stmt.setInt(1, cdpedido);
 
     ResultSet rs = stmt.executeQuery();
     HashMap map = new HashMap();
@@ -638,7 +758,47 @@ public HashMap pesquisa_nfpedido_envDEPC() throws SQLException, Exception{
     return map;
 
 }
+public HashMap pesquisa_nfpedido_envDEPC(int cdpedido) throws SQLException, Exception{
+    
+   
+    String qry = "select cdpedido, iduf, idnfe"
+            + " from vnd_nfpedido nf"
+            + " inner join vnd_pedvenda using (cdpedido)"
+            + " inner join cdc_estabelecim e using (idestabelecimen)"
+            + " inner join adm_estado es on (e.uf = es.uf )"
+            + " where cdpedido = ?"
+            + " order by date(dt_pedido) desc, cdpedido desc, situacaonf desc limit 1";
 
+    PreparedStatement stmt = conn.prepareStatement(qry);
+    stmt.setInt(1, cdpedido);
+    ResultSet rs = stmt.executeQuery();
+    HashMap map = new HashMap();
+
+    if (rs.next()) {
+        map.put("cdpedido", rs.getInt(1));
+        map.put("iduf", rs.getInt(2));
+        map.put("idnfe", rs.getString(3));
+        
+//        qry = "update vnd_nfpedido set status_nfe = null where cdpedido = ?";
+//        stmt = conn.prepareStatement(qry);
+//        stmt.setInt(1, rs.getInt(1));
+//        stmt.executeUpdate();
+        
+        DtSystem.getDate();
+//        System.out.println(">>>RecepcaoNfe....:" + map.get("cdpedido").toString());
+        
+    } else {
+        map.put("cdpedido", 0);
+    }
+    rs.close();
+    stmt.close();
+    
+   
+    
+    
+    return map;
+
+}
 public HashMap pesquisa_nfpedido_cdpedido(int cdpedido) throws SQLException, Exception{
     
    
@@ -679,7 +839,7 @@ public HashMap pesquisa_nfpedido_ret() throws SQLException, Exception{
             + " inner join adm_estado es on (e.uf = es.uf )"
             + " where situacaonf = 'E' and status_nfe in (103,104,105)"
             + " and obs_nfe is not null and flag::integer < 9"
-            + " order by dt_pedido desc, status_nfe asc, flag::integer, cdpedido limit 1";
+            + " order by dt_pedido desc, status_nfe asc, nregdpec desc, flag::integer, cdpedido   limit 1";
 
     PreparedStatement stmt = conn.prepareStatement(qry);
 
@@ -878,9 +1038,10 @@ public void pesquisa_nfpedido_env_ide(int cdpedido) throws SQLException, Excepti
             + " substring(coalesce(dt_saida,dt_nota)::text,12,8) as hsaient, coalesce(trim(pv.serie), '0') as serie, trim(pv.modelo) as modelo,"
             + " substring(idnfe, 44, 1) as cDv, idestabelecimen,"
             + " coalesce(finNFe, 1) as finNFe, o.e_s as tpNf,"
-            + "	(select case when uf = e.uf then 1 else 2 end from par_destinat where iddestinatario = pv.iddestinatario) as idDest,"
+            + " (select case when uf = e.uf then 1 else 2 end from par_destinat where iddestinatario = pv.iddestinatario) as idDest,"
             + " c.cdmunicipio as cMunFG,"
-            + " coalesce(pv.cdpedido_origem,0) as refNFe, tpemis, dhregdpec"
+            + " coalesce(pv.cdpedido_origem,0) as cdpedido_origem, coalesce(pv.cdpedidonfe_origem,0) as cdpedidonfe_origem,"
+            + " tpemis, replace(to_char(dhregdpec, 'yyyy-mm-dd HH24:MI:SS'),' ','T')||extract(timezone_hour from dhregdpec::timestamptz) * interval '1 hour' as dhregdpec"
             + " from vnd_pedvenda pv"
             + " inner join vnd_nfpedido nfp on (nfp.cdpedido=pv.cdpedido)"
             + " inner join vnd_operacao o using (cdoperacao)"
@@ -916,14 +1077,14 @@ public void pesquisa_nfpedido_env_ide(int cdpedido) throws SQLException, Excepti
         ide.setIndPres("1");
         ide.setTpEmis(rs.getString("tpemis").trim());
         if (rs.getString("dhregdpec") != null){
-            ide.setDhCont(rs.getString("dhregdpec").replace(" ", "T"));
+            ide.setDhCont(rs.getString("dhregdpec").trim().substring(0,25));
             ide.setXJust("Falha de Comunicacao");
         }
         
         // verifica nfref
         TNFe.InfNFe.Ide.NFref nfref = new TNFe.InfNFe.Ide.NFref();
         
-        if (rs.getInt("refNFe") > 0){
+        if (rs.getInt("cdpedido_origem") > 0){
             
             String qry1 = "select pv.cdpedido, u.iduf as cUF, pv.cdpedido as cNF, nr_nota_fiscal as nnf,"
                  + " dt_nota as demi,  coalesce(pv.serie, '0') as serie, pv.modelo,"
@@ -938,7 +1099,7 @@ public void pesquisa_nfpedido_env_ide(int cdpedido) throws SQLException, Excepti
                  + " where pv.cdpedido = ?";
             
              stmt = conn.prepareStatement(qry1);
-             stmt.setInt(1, rs.getInt("refNFe"));
+             stmt.setInt(1, rs.getInt("cdpedido_origem"));
              
              ResultSet rs1 = stmt.executeQuery();     
              if (rs1.next()) {
@@ -953,11 +1114,41 @@ public void pesquisa_nfpedido_env_ide(int cdpedido) throws SQLException, Excepti
                 }
                 ide.getNFref().add(nfref);
              }
-             
-             
-
         }
-
+        if (rs.getInt("cdpedidonfe_origem") > 0){
+            String qry1 = "select p.idNfe, substring(extract('year' from p.dt_emissao)::text,3,2)||lpad(extract('month' from p.dt_emissao)::text,2,'0') as aamm,"
+                 + " p.uf, p.cnpj, case when p.inscr_estadual ilike '%isento%' then 'ISENTO' else p.inscr_estadual end as inscr_estadual, p.modelo, p.serienf,"
+                 + " p.nrnota"
+                 + " from lfs_nfentrad p"
+                 + " where p.cdpedidonfe = ?";
+            
+             stmt = conn.prepareStatement(qry1);
+             stmt.setInt(1, rs.getInt("cdpedidonfe_origem"));
+             
+             ResultSet rs1 = stmt.executeQuery();     
+             if (rs1.next()) {
+                 if (rs1.getString("modelo").equals("55")){
+                    nfref.setRefNFe(rs1.getString("idNfe"));
+                 } else {
+                     TNFe.InfNFe.Ide.NFref.RefNFP refnfp = new TNFe.InfNFe.Ide.NFref.RefNFP();
+                     refnfp.setAAMM(rs1.getString("aamm"));
+                     if (rs1.getString("cnpj").length() > 14){
+                        refnfp.setCNPJ(rs1.getString("cnpj"));
+                     } else {
+                        refnfp.setCPF(rs1.getString("cnpj"));
+                     }
+                     
+                     refnfp.setCUF(rs1.getString("uf").toUpperCase());
+                     refnfp.setIE(rs1.getString("inscr_estadual"));
+                     refnfp.setMod(rs1.getString("modelo"));
+                     refnfp.setNNF(rs1.getString("nrnota"));
+                     refnfp.setSerie(rs1.getString("serienf"));
+                     
+                     nfref.setRefNFP(refnfp);
+                 }
+                ide.getNFref().add(nfref);
+             }
+        }
         
         // verifica indicador de pagamento
     
@@ -1497,7 +1688,7 @@ public void pesquisa_nfpedido_env_det(int cdpedido) throws SQLException, Excepti
           TNFe.InfNFe.Det.Imposto.PIS.PISNT pisnt = new TNFe.InfNFe.Det.Imposto.PIS.PISNT();
           TNFe.InfNFe.Det.Imposto.PIS.PISAliq pisaliq = new TNFe.InfNFe.Det.Imposto.PIS.PISAliq();
           
-          if (rs.getDouble("vpis") >0){
+          if (rs.getDouble("vpis") > 0){
               pisaliq.setCST("01");
               pisaliq.setVBC(rs.getString("vProd"));
               pisaliq.setPPIS(rs.getString("pPIS"));
@@ -1711,7 +1902,7 @@ public void pesquisa_nfpedido_env_transp(int cdpedido) throws SQLException, Exce
     String replace = "";
     
     String qry = "Select  coalesce(pt.nmparceiro, '') as xNome,"
-            + " coalesce(pe.frete_cif_fob, '1') as ModFrete,"
+            + " coalesce(pe.frete_cif_fob, '9') as ModFrete,"
             + " dt.cnpj_destino as CNPJ, "
             + " coalesce(dt.inscr_est, '') as IE,"
             + " coalesce(dt.end_destino, '') as xEnder,"
@@ -1805,30 +1996,42 @@ public void pesquisa_nfpedido_env_infadic(int cdpedido) throws SQLException, Exc
     
     TNFe.InfNFe.InfAdic infadic = new TNFe.InfNFe.InfAdic();    
     
-    String qry = "select nmmensagem, coalesce(insercao1, '') as insercao1, coalesce(insercao2, '') as insercao2,"
-            + " coalesce(insercao3, '') as insercao3, coalesce(insercao4, '') as insercao4, "
-            + " coalesce(insercao5, '') as insercao5, coalesce(insercao6, '') as insercao6,"
-            + " coalesce(insercao7, '') as insercao7, coalesce(insercao8, '') as insercao8,"
-            + " qtdinsercao"
-            + " from vnd_mensnota m"
-            + " inner join vnd_mensagem using (cdmensagem)"
-            + " where cdpedido = ?";
+//    String qry = "select nmmensagem, coalesce(insercao1, '') as insercao1, coalesce(insercao2, '') as insercao2,"
+//            + " coalesce(insercao3, '') as insercao3, coalesce(insercao4, '') as insercao4, "
+//            + " coalesce(insercao5, '') as insercao5, coalesce(insercao6, '') as insercao6,"
+//            + " coalesce(insercao7, '') as insercao7, coalesce(insercao8, '') as insercao8,"
+//            + " qtdinsercao"
+//            + " from vnd_mensnota m"
+//            + " inner join vnd_mensagem using (cdmensagem)"
+//            + " where cdpedido = ?";
+//    
+//    PreparedStatement stmt = conn.prepareStatement(qry);
+//    stmt.setInt(1, cdpedido);
+//    ResultSet rs = stmt.executeQuery();
+//    
+//    while (rs.next()) {
+//       L_tmp += rs.getString("nmmensagem").trim().replaceAll(qry, replace) + ". ";
+//       if (rs.getInt("qtdinsercao") > 0) {
+//        for (int i = 1; i < rs.getInt("qtdinsercao") + 1; i++) {
+//            L_tmp = L_tmp.replaceFirst("\\$", rs.getString("insercao"+i));
+//        }
+//       } else {
+//         L_tmp += rs.getString("nmmensagem").trim();
+//       }
+//       L_tmp = L_tmp.replace("$", "");
+//     }
     
+    
+    String qry = "select * from vnd_pesquisa_nfpedido_env_infadic(?)";
+
     PreparedStatement stmt = conn.prepareStatement(qry);
     stmt.setInt(1, cdpedido);
     ResultSet rs = stmt.executeQuery();
     
-    while (rs.next()) {
-       L_tmp += rs.getString("nmmensagem").trim() + ". ";
-       if (rs.getInt("qtdinsercao") > 0) {
-        for (int i = 1; i < rs.getInt("qtdinsercao") + 1; i++) {
-            L_tmp = L_tmp.replaceFirst("\\$", rs.getString("insercao"+i));
-        }
-       } else {
-         L_tmp += rs.getString("nmmensagem").trim();
-       }
-       L_tmp = L_tmp.replace("$", "");
-     }
+    if (rs.next()){
+        L_tmp = rs.getString(1);
+    }
+    
     if (L_tmp.length() > 0){
         infadic.setInfAdFisco(L_tmp.trim());
     }    
@@ -1871,7 +2074,6 @@ public String getTotaltributos(int cdpedido) throws SQLException{
     String qry = "select sum(vtottrib) as vtottrib," +
             " round(((sum(vtottrib) / sum(subtotal)) * 100)::numeric,2) as perc" +
             " from vnd_itempedv where cdpedido = ?";
-
 
     PreparedStatement stmt = conn.prepareStatement(qry);
     stmt.setInt(1, cdpedido);

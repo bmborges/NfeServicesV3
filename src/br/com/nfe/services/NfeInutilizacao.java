@@ -11,8 +11,7 @@ import br.com.nfe.dao.vnd.VND_nfpedidoDAO;
 import br.com.nfe.util.AssinarXMLsCertfificadoA1;
 import br.com.nfe.util.KStore;
 import br.com.nfe.util.Util;
-import br.inf.portalfiscal.nfe.schema.inutnfe.ObjectFactory;
-import br.inf.portalfiscal.nfe.schema.inutnfe.TInutNFe;
+import br.inf.portalfiscal.nfe.schema.inutnfe.*;
 import br.inf.portalfiscal.nfe.schema.retinutnfe.TRetInutNFe;
 import br.inf.portalfiscal.www.nfe.wsdl.inutilizacao.NfeInutilizacao2Stub;
 import java.awt.Color;
@@ -62,7 +61,15 @@ public class NfeInutilizacao {
         this.main = main;
         u = new Util();
     }
-
+    public static void main(String[] args) throws Exception {
+        HashMap pedido_hm = new HashMap();
+        NfeInutilizacao i = new NfeInutilizacao(null);
+        VND_nfpedidoDAO pedido_dao = new VND_nfpedidoDAO();
+        pedido_hm = pedido_dao.pesquisa_nfpedido_inut(7686486);
+        if (Integer.parseInt(pedido_hm.get("cdpedido").toString()) > 0 ){
+            i.Inutilizacao(pedido_hm);
+        }
+    }
 
     public void StartTimer() throws Exception{
         pedido_dao = new VND_nfpedidoDAO();
@@ -116,8 +123,12 @@ public class NfeInutilizacao {
                 
     try {            
         result = stub.nfeInutilizacaoNF2(dadosMsg, nfeCabecMsgE);  
-        Line = result.getExtraElement().toString(); 
-        main.CarregaJtxa(Line,Color.BLACK);
+        Line = result.getExtraElement().toString();
+        try {
+            main.CarregaJtxa(Line,Color.BLACK);
+        } catch (Exception e) {
+            System.out.println(Line);
+        }
     } catch (Exception e) {
          main.CarregaJtxa("Erro NfeInutilizacao : " + e,Color.RED);
     }  

@@ -32,6 +32,7 @@ import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.MediaSizeName;
 import javax.print.event.PrintJobAdapter;
 import javax.print.event.PrintJobEvent;
+import javax.swing.text.BadLocationException;
 import javax.xml.parsers.ParserConfigurationException;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -58,8 +59,10 @@ public class ControleImpressao {
 
         VND_nfpedidoDAO nfpedido = new VND_nfpedidoDAO();
         ControleImpressao c = new ControleImpressao(null);
+        c.PesquisaXML(8139101, null, 0);
 //        c.ViewPdf(null, 6074593);
-        nfpedido.pesquisa_nfpedido_reimpressao(4, 6069120, 6069356, c);
+//        nfpedido.pesquisa_nfpedido_reimpressao(1, 7257498, 7257498, c);
+        //nfpedido.pesquisa_nfpedido_reimpressao(1, 7257503, 7257503, c);
                
     }
 
@@ -73,8 +76,9 @@ public class ControleImpressao {
          this.conn = conn;
     }
 
-    public void printPDF(byte[] f, int cdpedido){
+    public void printPDF(byte[] f, int cdpedido, int copias){
         int cdc = 0;
+        int iCopias = copias;
         PrintService printService1 = null;
         try {
             DocFlavor dflavor = DocFlavor.INPUT_STREAM.AUTOSENSE;
@@ -107,15 +111,26 @@ public class ControleImpressao {
                         // Configura o conjunto de parametros para a impressora
                         PrintRequestAttributeSet printerAttributes = new HashPrintRequestAttributeSet();
                         // Adiciona uma propriedade de impressão: imprimir x cópias baseado no retorno do parametro
-                        printerAttributes.add(new Copies(Integer.parseInt(map_imp.get("valor").toString())));
+                        if (iCopias == 0) {
+                            iCopias = Integer.parseInt(map_imp.get("valor").toString());
+                        }
+                    
+                        printerAttributes.add(new Copies(iCopias));
 
                         Doc doc = new SimpleDoc(stream, dflavor, null);
                         dpj.print(doc, printerAttributes);
-
-                        main.CarregaJtxa("Imprimiu Pedido: " + cdpedido + " CDC: " + cdc + " Impressora: " + impressora.getName(),Color.MAGENTA);
+                        try {
+                            main.CarregaJtxa("Imprimiu Pedido: " + cdpedido + " CDC: " + cdc + " Impressora: " + impressora.getName(),Color.MAGENTA);
+                        } catch (Exception e) {
+                            System.out.println("Imprimiu Pedido: " + cdpedido + " CDC: " + cdc + " Impressora: " + impressora.getName());
+                        }
 
                     } catch (Exception e) {
-                        main.CarregaJtxa(e.getMessage(), Color.red);
+                        try {
+                            main.CarregaJtxa(e.getMessage(), Color.red);
+                        } catch (Exception e1) {
+                            e.printStackTrace();
+                        }
                     }
                     
             } else {
@@ -126,7 +141,7 @@ public class ControleImpressao {
         }
         
     }
-    public void PesquisaXML(int cdpedido, String xml_nfe) throws SQLException, SAXException, JRException, FileNotFoundException, ParserConfigurationException, IOException, Exception{
+    public void PesquisaXML(int cdpedido, String xml_nfe, int env_boleto) throws SQLException, SAXException, JRException, FileNotFoundException, ParserConfigurationException, IOException, Exception{
         
         if (xml_nfe == null){
             String qry = "Select xml_nfe from vnd_nfpedido where cdpedido = ?";
@@ -142,11 +157,75 @@ public class ControleImpressao {
             rs.close();
             stmt.close();
         }
-        GeraPdf(xml_nfe,cdpedido);
+        
+        // caso variavel for 1 envia o boleto por email    
+        if (env_boleto == 1) {
+            //gera o boleto caso houver
+            // 0 no segundo parametro não imprime o boleto pois ira enviar por email
+            byte[] rPdfBoleto = GeraBoleto(cdpedido,0);
+            // 0 no quarto parametro não imprime a nota pois ira enviar por email
+            GeraPdf(xml_nfe,cdpedido,rPdfBoleto,0);
+        } else {
+            //gera o boleto caso houver
+            // 1 no segundo parametro imprime o boleto pois nao ira enviar por email
+            byte[] rPdfBoleto = GeraBoleto(cdpedido,1);
+            // 1 no quarto parametro imprime a nota
+            GeraPdf(xml_nfe,cdpedido,null,1);
+        }
 
     }
-  
-    public void GeraPdf(String xml_nfe, int cdpedido) throws JRException, FileNotFoundException, SAXException, ParserConfigurationException, IOException, Exception{
+    public byte[] GeraBoleto(int cdpedido, int imprime) throws BadLocationException, Exception{
+         byte[] pdf = null;  
+        
+        try {
+          //Caminho do arquivo 
+          String jasper_rel = caminho + "Rpt_BoletoCarne.jasper";
+          
+          VND_nfpedidoDAO nfpedidoDAO = new VND_nfpedidoDAO();
+          int retorno = nfpedidoDAO.pesquisa_boleto(cdpedido);
+          if (retorno > 0){
+            HashMap map = new HashMap();
+            map.put("p_cdseqpgto", retorno);
+            map.put("url_img", caminho);
+            map.put("SUBREPORT_DIR",caminho);
+            if (imprime == 1){
+                // se imprime gera comprovante
+                map.put("p_impcomp",0);
+            } else {
+                map.put("p_impcomp",1);
+            }
+              
+            /** 
+              * Gerando o relatorio 
+              */ 
+              JasperPrint print = null;
+              try {
+                  print = JasperFillManager.fillReport(jasper_rel, map, conn);
+                  /* Exportando em pdf */  
+                  pdf = JasperExportManager.exportReportToPdf(print);
+                  JasperExportManager.exportReportToPdfFile(print,caminho+"boleto.pdf");
+              } catch (Exception e) {
+                  try {
+                    main.CarregaJtxa(e.toString(),Color.RED);
+                  } catch (Exception e1) {
+                      e.printStackTrace();
+                  }
+              }
+              // caso variavel imprime for 1 imprime o boleto
+              if (imprime == 1) {
+                printPDF(pdf,cdpedido,1);
+              }
+          }    
+          
+        } catch (JRException e) {
+          e.printStackTrace();
+          pdf = null; 
+        }
+        
+        return pdf;
+    }
+    
+    public void GeraPdf(String xml_nfe, int cdpedido, byte[] pdfBoleto, int imprime) throws JRException, FileNotFoundException, SAXException, ParserConfigurationException, IOException, Exception{
          byte[] pdf = null;  
         
         try {
@@ -186,18 +265,21 @@ public class ControleImpressao {
             }
          
 //          JasperViewer.viewReport(print);
-          
-          printPDF(pdf,cdpedido);
+          // caso variavel imprime for 1 imprime a nota
+          if (imprime == 1) {
+            printPDF(pdf,cdpedido,0);
+          }
           
           VND_pedvendaDAO pedido_dao = new VND_pedvendaDAO();
           String idnfe = pedido_dao.select_idnfe(cdpedido);
           
           EnviarEmail e = new EnviarEmail(main);
             try {
-                main.CarregaJtxa("Não esta enviando email",Color.RED);
-                //e.Enviar(xml_nfe, pdf, idnfe,"env");
+                //main.CarregaJtxa("Não esta enviando email",Color.RED);
+                e.Enviar(xml_nfe, pdf, idnfe, pdfBoleto,"env");
+                //e.Enviar(xml_nfe, pdf, idnfe, null,"env");
             } catch (Exception e1) {
-                System.out.println("Não esta enviando email");
+                System.out.println("Não esta enviando email " + e1);
             }
           
         } catch (JRException e) {
@@ -283,7 +365,7 @@ public class ControleImpressao {
             PrintService[] printService = PrintServiceLookup.lookupPrintServices(dflavor, null);
             for (int i = 0; i < printService.length; i++) {
                 printService1 = printService[i];
-                if (printService1.getName().contentEquals("print-galc")){
+                if (printService1.getName().contentEquals("print-ccon")){
                     impressora = printService1;
                     break;
                 }

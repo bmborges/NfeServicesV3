@@ -12,11 +12,6 @@ import br.com.nfe.util.AssinarXMLsCertfificadoA1;
 import br.com.nfe.util.DtSystem;
 import br.com.nfe.util.KStore;
 import br.com.nfe.util.NFeValidacaoXML;
-import br.inf.portalfiscal.nfe.dpec.env.*;
-import br.inf.portalfiscal.nfe.dpec.env.TDPEC.InfDPEC;
-import br.inf.portalfiscal.nfe.dpec.env.TDPEC.InfDPEC.IdeDec;
-import br.inf.portalfiscal.nfe.dpec.env.TDPEC.InfDPEC.ResNFe;
-import br.inf.portalfiscal.www.nfe.wsdl.scerecepcaorfb.SCERecepcaoRFBStub;
 import java.awt.Color;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -44,10 +39,10 @@ import org.apache.axis2.AxisFault;
  *
  * @author supervisor
  */
-public class NfeDpec {
+public class NfeEpec {
     
     String xml = "";
-    TDPEC dpec = null;
+//    TDPEC dpec = null;
     private Unmarshaller unmarshaller;
 
     static Timer t = new Timer();
@@ -56,11 +51,11 @@ public class NfeDpec {
 
     br.com.nfe.gui.Painel main = null;
 
-    public NfeDpec(br.com.nfe.gui.Painel main) {
+    public NfeEpec(br.com.nfe.gui.Painel main) {
         this.main = main;
     }
     public static void main(String[] args) throws Exception {
-        NfeDpec d = new NfeDpec(null);
+        NfeEpec d = new NfeEpec(null);
         HashMap pedido_hm = new HashMap();
         VND_nfpedidoDAO pedido_dao = new VND_nfpedidoDAO();
         pedido_hm = pedido_dao.pesquisa_nfpedido_dpec(7957666);
@@ -100,28 +95,28 @@ public void StartTimer() throws Exception{
     }
 public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws XMLStreamException, AxisFault, RemoteException, BadLocationException{
     String Line = "";
-    SCERecepcaoRFBStub.SceRecepcaoDPECResult result = null;     
+//    SCERecepcaoRFBStub.SceRecepcaoDPECResult result = null;     
         
     OMElement ome = AXIOMUtil.stringToOM(Xml);  
 
-    SCERecepcaoRFBStub.SceDadosMsg dadosMsg = new SCERecepcaoRFBStub.SceDadosMsg();
+//    SCERecepcaoRFBStub.SceDadosMsg dadosMsg = new SCERecepcaoRFBStub.SceDadosMsg();
         
-    dadosMsg.setExtraElement(ome);
+//    dadosMsg.setExtraElement(ome);
     
     
-    SCERecepcaoRFBStub.SceCabecMsg nfeCabecMsg = new SCERecepcaoRFBStub.SceCabecMsg();
+//    SCERecepcaoRFBStub.SceCabecMsg nfeCabecMsg = new SCERecepcaoRFBStub.SceCabecMsg();
         
-    nfeCabecMsg.setVersaoDados(VersaoDados);  
+//    nfeCabecMsg.setVersaoDados(VersaoDados);  
 
-    SCERecepcaoRFBStub.SceCabecMsgE nfeCabecMsgE = new SCERecepcaoRFBStub.SceCabecMsgE();
+//    SCERecepcaoRFBStub.SceCabecMsgE nfeCabecMsgE = new SCERecepcaoRFBStub.SceCabecMsgE();
 
     
-    nfeCabecMsgE.setSceCabecMsg(nfeCabecMsg);  
+//    nfeCabecMsgE.setSceCabecMsg(nfeCabecMsg);  
         
-    SCERecepcaoRFBStub stub = new SCERecepcaoRFBStub(url.toString());
+//    SCERecepcaoRFBStub stub = new SCERecepcaoRFBStub(url.toString());
     try {            
-        result = stub.sceRecepcaoDPEC(dadosMsg, nfeCabecMsgE);  
-        Line = result.getExtraElement().toString();
+//        result = stub.sceRecepcaoDPEC(dadosMsg, nfeCabecMsgE);  
+//        Line = result.getExtraElement().toString();
         try {
             main.CarregaJtxa(Line,Color.RED);
         } catch (Exception exc) {
@@ -165,11 +160,11 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
 
                 context = JAXBContext.newInstance("br.inf.portalfiscal.nfe.dpec.env");
                 Marshaller marshaller = context.createMarshaller();  
-                JAXBElement<TDPEC> element = new ObjectFactory().createEnvDPEC(dpec);  
+//                JAXBElement<TDPEC> element = new ObjectFactory().createEnvDPEC(dpec);  
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);  
                 marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
                 
-                marshaller.marshal(element,new StreamResult(out));
+//                marshaller.marshal(element,new StreamResult(out));
 
                 xml = out.toString();
                 
@@ -196,32 +191,32 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
                 }
                 String retorno = Envio(xml, url, null, bean.getValor().toString());
                 if (retorno.length() > 0){
-                    context = JAXBContext.newInstance(TRetDPEC.class);  
-                    unmarshaller = context.createUnmarshaller();
-                    TRetDPEC retdpec  = unmarshaller.unmarshal(new StreamSource(new StringReader(retorno)), TRetDPEC.class).getValue();
-                    if (Integer.parseInt(retdpec.getInfDPECReg().getCStat()) == 124){
-
-                        pedido_bean.setCdpedido(Integer.parseInt(pedido_hm.get("cdpedido").toString()));
-                        pedido_bean.setNregdpec(retdpec.getInfDPECReg().getNRegDPEC());
-                        pedido_bean.setStatus_nfe(Integer.parseInt(retdpec.getInfDPECReg().getCStat()));
-
-                        String dhreg = retdpec.getInfDPECReg().getDhRegDPEC().toString();
-                        dhreg = dhreg.replace("T", " ");
-                        pedido_bean.setDhregdpec(dhreg);
-                       
-                        main.CarregaJtxa(">>>DPEC....:",Color.BLUE);
-                        pedido_dao.Update_nfpedido_env(pedido_bean);
-
-                        ControleImpressao c = new ControleImpressao(main);
-                        c.PesquisaXML(Integer.parseInt(pedido_hm.get("cdpedido").toString()), null,1);
-
-                    } else {
-                        pedido_bean.setCdpedido(Integer.parseInt(pedido_hm.get("cdpedido").toString()));
-                        pedido_bean.setStatus_nfe(Integer.parseInt(retdpec.getInfDPECReg().getCStat()));
-                        pedido_bean.setNregdpec("");
-                        main.CarregaJtxa(">>>DPEC....:" + retdpec.getInfDPECReg().getNRegDPEC() ,Color.BLUE);
-                        pedido_dao.Update_nfpedido_env(pedido_bean);
-                    }
+//                    context = JAXBContext.newInstance(TRetDPEC.class);  
+//                    unmarshaller = context.createUnmarshaller();
+////                    TRetDPEC retdpec  = unmarshaller.unmarshal(new StreamSource(new StringReader(retorno)), TRetDPEC.class).getValue();
+//                    if (Integer.parseInt(retdpec.getInfDPECReg().getCStat()) == 124){
+//
+//                        pedido_bean.setCdpedido(Integer.parseInt(pedido_hm.get("cdpedido").toString()));
+//                        pedido_bean.setNregdpec(retdpec.getInfDPECReg().getNRegDPEC());
+//                        pedido_bean.setStatus_nfe(Integer.parseInt(retdpec.getInfDPECReg().getCStat()));
+//
+//                        String dhreg = retdpec.getInfDPECReg().getDhRegDPEC().toString();
+//                        dhreg = dhreg.replace("T", " ");
+//                        pedido_bean.setDhregdpec(dhreg);
+//                       
+//                        main.CarregaJtxa(">>>DPEC....:",Color.BLUE);
+//                        pedido_dao.Update_nfpedido_env(pedido_bean);
+//
+//                        ControleImpressao c = new ControleImpressao(main);
+////                        c.PesquisaXML(Integer.parseInt(pedido_hm.get("cdpedido").toString()), null);
+//
+//                    } else {
+//                        pedido_bean.setCdpedido(Integer.parseInt(pedido_hm.get("cdpedido").toString()));
+//                        pedido_bean.setStatus_nfe(Integer.parseInt(retdpec.getInfDPECReg().getCStat()));
+//                        pedido_bean.setNregdpec("");
+//                        main.CarregaJtxa(">>>DPEC....:" + retdpec.getInfDPECReg().getNRegDPEC() ,Color.BLUE);
+//                        pedido_dao.Update_nfpedido_env(pedido_bean);
+//                    }
                 } else {
                     main.CarregaJtxa(">>>Erro retorno DPEC....:",Color.RED);
                 }
@@ -234,52 +229,52 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
             /** 
              * Estrutura XML com a Declaração Prévia Emissão em Contingência - DPEC. 
              */  
-            dpec = new TDPEC();  
+//            dpec = new TDPEC();  
             /* 
              * Versão do leiaute. 
              */  
-            dpec.setVersao("1.01");  
+//            dpec.setVersao("1.01");  
   
             /** 
              * Tag de grupo com Informações da Declaração  
              * Prévia de Emissão em Contingência 
              */  
-            InfDPEC infDPEC = new InfDPEC();  
+//            InfDPEC infDPEC = new InfDPEC();  
             /* 
              * Grupo de Identificação da TAG a ser assinada. 
              * Informar com a literal "DPEC" + CNPJ do emissor. 
              */  
-            infDPEC.setId("DPEC" + pedido_hm.get("cnpj").toString());  
+//            infDPEC.setId("DPEC" + pedido_hm.get("cnpj").toString());  
               
             /** 
              * Grupo de Identificação do Declarante, deve ser  
              * informado com os dados do emissor das NF-e  
              * emitidas em contingência eletrônica 
              */  
-            IdeDec ideDec = new IdeDec();  
+//            IdeDec ideDec = new IdeDec();  
             /* 
              * Código da UF do emitente do Documento Fiscal. Utilizar a Tabela do IBGE. 
              */  
-            ideDec.setCUF(pedido_hm.get("iduf").toString());  
+//            ideDec.setCUF(pedido_hm.get("iduf").toString());  
             /* 
              * Identificação do Ambiente: 
              * 1 - Produção 
              * 2 - Homologação. 
              */  
-            ideDec.setTpAmb("1");  
+//            ideDec.setTpAmb("1");  
             /* 
              * Versão do aplicativo utilizado no processo de emissão da DPEC. 
              */  
-            ideDec.setVerProc("Sistema Sief");  
+//            ideDec.setVerProc("Sistema Sief");  
             /* 
              * Número do CNPJ do emitente, vedada a formatação do campo. 
              */  
-            ideDec.setCNPJ(pedido_hm.get("cnpj").toString());
+//            ideDec.setCNPJ(pedido_hm.get("cnpj").toString());
             /* 
              * Número da Inscrição Estadual do emitente, vedada a formatação do campo. 
              */  
-            ideDec.setIE(pedido_hm.get("inscricaoestad").toString());  
-            infDPEC.setIdeDec(ideDec);  
+//            ideDec.setIE(pedido_hm.get("inscricaoestad").toString());  
+//            infDPEC.setIdeDec(ideDec);  
   
             /** 
              * Resumo das NF-e emitidas no Sistema de 
@@ -287,11 +282,11 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
              * tpEmis "4" = Contingência DPEC - emissão em contingência com envio da Declaração 
              * Prévia de Emissão em Contingência – DPEC; 
              */  
-            ResNFe resNFe = new ResNFe();  
+//            ResNFe resNFe = new ResNFe();  
             /* 
              * Chave de Acesso da NF-e emitida em contingência eletrônica. 
              */  
-            resNFe.setChNFe(pedido_hm.get("idnfe").toString());  
+//            resNFe.setChNFe(pedido_hm.get("idnfe").toString());  
             /* 
              * Informar o CNPJ ou o CPF do destinatário da NF-e, 
              * em caso de destinatário ou remetente estabelecido 
@@ -300,31 +295,31 @@ public String Envio(String Xml, URL url, String CUF, String VersaoDados) throws 
              */  
             
             if (pedido_hm.get("cnpj_pedido").toString().toString().length() > 11){
-                resNFe.setCNPJ(pedido_hm.get("cnpj_pedido").toString());  
+//                resNFe.setCNPJ(pedido_hm.get("cnpj_pedido").toString());  
             } else {
-                resNFe.setCPF(pedido_hm.get("cnpj_pedido").toString());
+//                resNFe.setCPF(pedido_hm.get("cnpj_pedido").toString());
             }
             /* 
              * Sigla da UF de destino da mercadoria. 
              */  
-            resNFe.setUF(TUf.valueOf(pedido_hm.get("uf").toString()));  
+//            resNFe.setUF(TUf.valueOf(pedido_hm.get("uf").toString()));  
             /* 
              * Valor total da NF-e. 
              */  
-            resNFe.setVNF(pedido_hm.get("totalpedido").toString());  
+//            resNFe.setVNF(pedido_hm.get("totalpedido").toString());  
             /* 
              * Valor Total do ICMS da operação própria. 
              */  
-            resNFe.setVICMS(pedido_hm.get("totalicms").toString());  
+//            resNFe.setVICMS(pedido_hm.get("totalicms").toString());  
             /* 
              * Valor Total do ICMS retido por Substituição Tributária 
              */  
-            resNFe.setVST(pedido_hm.get("totalicmssubst").toString());  
+//            resNFe.setVST(pedido_hm.get("totalicmssubst").toString());  
               
-            infDPEC.getResNFe().add(resNFe);  
+//            infDPEC.getResNFe().add(resNFe);  
               
-            dpec.setInfDPEC(infDPEC);  
-            dpec.setSignature(null); // Assinar o XML antes do envio;  
+//            dpec.setInfDPEC(infDPEC);  
+//            dpec.setSignature(null); // Assinar o XML antes do envio;  
      
  }
      

@@ -66,6 +66,16 @@ public class Util {
 
         return rTpImp;
     }
+    
+    public void UpdateTpEmiss(int tpemiss) throws SQLException{
+        String qry = "update adm_param set codigo = ? "
+             + " where nmparam ilike 'VND_TIPOEMISSAO_NFE'";
+        PreparedStatement stmt = conn.prepareStatement(qry);
+        stmt.setInt(1, tpemiss);
+                
+        int rs = stmt.executeUpdate();
+    }    
+    
  public static String RemoveCaracteresEdicao(String xml){
      String[] naopode = {"\n","\t","\r","> <",">  <"};
      for (int i = 0; i < naopode.length; i++) {

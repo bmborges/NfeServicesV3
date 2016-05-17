@@ -50,6 +50,7 @@ public class Painel extends javax.swing.JFrame {
     NfeCCe NfeCCe = null;
     ImportXMLProprio impXML = null;
     NfeRetRecepcao NfeRetRecepcao = null;
+    EnvBoleto envBoleto = null;
 
     StyledDocument doc = null;
     Style style = null;
@@ -129,17 +130,19 @@ public class Painel extends javax.swing.JFrame {
         NfeCCe = new NfeCCe(this);
         impXML = new ImportXMLProprio(this);
         NfeRetRecepcao = new NfeRetRecepcao(this);
+        envBoleto = new EnvBoleto(this);
 
         NfeStatusServico.StartTimer();
-        //NfeManifesto.StartTimer();
+        NfeManifesto.StartTimer();
         NfeInutilizacao.StartTimer();
         NfeConsulta.StartTimer();
         NfeRecepcao.StartTimer();
-        //NfeDpec.StartTimer();
+//        NfeDpec.StartTimer();
         NfeEventCanc.StartTimer();
-        //NfeCCe.StartTimer();
+        NfeCCe.StartTimer();
         NfeRetRecepcao.StartTimer();
-        //impXML.StartTimer();
+        impXML.StartTimer();
+        envBoleto.StartTimer();
     }
     private void StopServicos() throws Exception{
         mnStart.setEnabled(true);
@@ -154,6 +157,7 @@ public class Painel extends javax.swing.JFrame {
         NfeCCe.StopTimer();
         impXML.StopTimer();
         NfeRetRecepcao.StopTimer();
+        envBoleto.StopTimer();
     }
     public void exibirPrograma(JInternalFrame tela) {
     Point loc = desktopPane.getLocation();
